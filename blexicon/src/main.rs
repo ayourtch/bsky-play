@@ -11,7 +11,7 @@ struct BytesType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ArrayType {
-    items: Box<Data>,
+    items: Box<LexiconData>,
     pub maxLength: Option<u64>,
 }
 
@@ -28,7 +28,7 @@ struct SomeError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SubscriptionType {
-    parameters: Box<Data>,
+    parameters: Box<LexiconData>,
     message: SubscribeMessage,
     errors: Vec<SomeError>,
 }
@@ -37,13 +37,13 @@ struct SubscriptionType {
 struct OutputType {
     encoding: String,
     #[serde(default)]
-    schema: Option<Box<Data>>,
+    schema: Option<Box<LexiconData>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct QueryType {
     #[serde(default)]
-    parameters: Option<Box<Data>>,
+    parameters: Option<Box<LexiconData>>,
     output: OutputType,
     #[serde(default)]
     errors: Vec<SomeError>,
@@ -53,7 +53,7 @@ struct QueryType {
 struct InputType {
     encoding: String,
     #[serde(default)]
-    schema: Option<Box<Data>>,
+    schema: Option<Box<LexiconData>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,12 +64,12 @@ struct ProcedureType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SubscribeMessage {
-    schema: Box<Data>,
+    schema: Box<LexiconData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ParamsType {
-    properties: LinkedHashMap<String, Data>,
+    properties: LinkedHashMap<String, LexiconData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,7 +83,7 @@ struct ObjectType {
     required: Vec<String>,
     #[serde(default)]
     nullable: Vec<String>,
-    properties: LinkedHashMap<String, Data>,
+    properties: LinkedHashMap<String, LexiconData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,7 +100,7 @@ struct RefType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
-enum DataType {
+enum LexiconDataType {
     String(StringType),
     Bytes(BytesType),
     Array(ArrayType),
@@ -120,9 +120,9 @@ enum DataType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Data {
+struct LexiconData {
     #[serde(flatten)]
-    data: DataType,
+    data: LexiconDataType,
     description: Option<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -131,7 +131,7 @@ struct LexiconTypeDef {}
 struct LexiconFile {
     pub lexicon: u32,
     pub id: String,
-    pub defs: LinkedHashMap<String, Data>,
+    pub defs: LinkedHashMap<String, LexiconData>,
 }
 
 /// This program aims to compile a .json lexicon file into an Rust source code.
