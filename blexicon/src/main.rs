@@ -137,20 +137,81 @@ struct LexiconFile {
 fn codegen_one_def(defname: &str, def: &LexiconData) -> String {
     match &def.data {
         LexiconDataType::Object(o) => {
-            let mut fields_str = format!("");
+            let mut fields_str = String::new();
             for (propname, propdef) in &o.properties {
-                fields_str.push_str(&format!("   {},\n", propname));
+                let is_required = o.required.contains(propname);
+                let is_nullable = o.nullable.contains(propname);
+                // Determine the Rust type based on the property definition
+                let rust_type = match &propdef.data {
+                    LexiconDataType::String(_) => "String".to_string(),
+                    LexiconDataType::Integer => "i64".to_string(),
+                    LexiconDataType::Boolean => "bool".to_string(),
+                    LexiconDataType::Array(arr) => {
+                        let inner_type = match &arr.items.data {
+                            LexiconDataType::String(_) => "String".to_string(),
+                            LexiconDataType::Integer => "i64".to_string(),
+                            LexiconDataType::Boolean => "bool".to_string(),
+                            LexiconDataType::Ref(r) => r.reference.split("#").last().unwrap_or(&r.reference).to_string(),
+                            _ => "String".to_string() // Default fallback
+                        };
+                        format!("Vec<{}>", inner_type)
+                    },
+                    LexiconDataType::Ref(r) => r.reference.split("#").last().unwrap_or(&r.reference).to_string(),
+                    LexiconDataType::CidLink => "String".to_string(),
+                    LexiconDataType::Bytes(_) => "Vec<u8>".to_string(),
+                    LexiconDataType::Object(inner_obj) => {
+                        // For nested objects, we'll create a new type name based on the parent and property name
+                        format!("{}{}", defname, propname.chars().next().unwrap().to_uppercase().collect::<String>() + &propname[1..])
+                    },
+                    _ => "String".to_string() // Default fallback
+                };
+
+                // Build the type with Option wrapper if needed
+                let final_type = if !is_required || is_nullable {
+                    format!("Option<{}>", rust_type)
+                } else {
+                    rust_type
+                };
+
+                // Add serde rename if the property name isn't valid Rust
+                let rust_safe_name = if propname.contains('-') || propname.contains('.') {
+                    format!("    #[serde(rename = \"{}\")]\n", propname)
+                } else {
+                    "".to_string()
+                };
+
+                // Add the field with its documentation if available
+                if let Some(desc) = &propdef.description {
+                    fields_str.push_str(&format!("    /// {}\n", desc));
+                }
+                fields_str.push_str(&rust_safe_name);
+
+                // Convert property name to valid Rust identifier
+                let rust_field_name = propname.replace('-', "_").replace('.', "_");
+                fields_str.push_str(&format!("    pub {}: {},\n", rust_field_name, final_type));
+            }
+
+            // Generate the struct definition with derive macros
+            format!(
+                "#[derive(Debug, Clone, Serialize, Deserialize)]\npub struct {} {{\n{}}}\n\n",
+                defname,
+                fields_str
+            )
+        },
+        LexiconDataType::Union(u) => {
+            let mut variants = String::new();
+            for reference in &u.refs {
+                let variant_name = reference.split('#').last().unwrap_or(reference);
+                variants.push_str(&format!("    {},\n", variant_name));
             }
             format!(
-                r##"struct {} {{
-{}}}
-
-"##,
-                defname, fields_str
+                "#[derive(Debug, Clone, Serialize, Deserialize)]\n#[serde(tag = \"type\")]\npub enum {} {{\n{}}}\n\n",
+                defname,
+                variants
             )
-        }
+        },
         x => {
-            format!("/* {}: {:#?} - not generated */\n", &defname, &def)
+            format!("/* {}: {:#?} - not generated */\n", defname, x)
         }
     }
     .to_string()
