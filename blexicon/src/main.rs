@@ -34,23 +34,24 @@ struct SomeError {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct SubscriptionType {
-    parameters: Box<LexiconData>,
-    message: SubscribeMessage,
+    parameters: Option<ObjectType>,
+    message: Option<SubscribeMessage>,
     errors: Vec<SomeError>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct OutputType {
+    description: Option<String>,
     encoding: String,
     #[serde(default)]
-    schema: Option<Box<LexiconData>>,
+    schema: Option<Box<LexiconData>>, // FIXME: spec says it's object, but then says it is object, a ref or union of refs...
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct QueryType {
     #[serde(default)]
-    parameters: Option<Box<LexiconData>>,
-    output: OutputType,
+    parameters: Option<ObjectType>,
+    output: Option<OutputType>,
     #[serde(default)]
     errors: Vec<SomeError>,
 }
@@ -65,7 +66,12 @@ struct InputType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ProcedureType {
     #[serde(default)]
+    parameters: Option<ObjectType>,
+    #[serde(default)]
     input: Option<InputType>,
+    output: Option<OutputType>,
+    #[serde(default)]
+    errors: Vec<SomeError>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
