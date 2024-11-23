@@ -21,7 +21,7 @@ struct TimeType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubscribeError {
+struct SomeError {
     name: String,
     description: Option<String>,
 }
@@ -30,7 +30,7 @@ struct SubscribeError {
 struct SubscriptionType {
     parameters: Box<Data>,
     message: SubscribeMessage,
-    errors: Vec<SubscribeError>,
+    errors: Vec<SomeError>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,7 +46,7 @@ struct QueryType {
     parameters: Option<Box<Data>>,
     output: OutputType,
     #[serde(default)]
-    errors: Vec<SubscribeError>,
+    errors: Vec<SomeError>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
