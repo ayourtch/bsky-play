@@ -134,6 +134,28 @@ struct LexiconFile {
     pub defs: LinkedHashMap<String, LexiconData>,
 }
 
+fn codegen_one_def(defname: &str, def: &LexiconData) -> String {
+    match &def.data {
+        LexiconDataType::Object(o) => {
+            let mut fields_str = format!("");
+            for (propname, propdef) in &o.properties {
+                fields_str.push_str(&format!("   {},\n", propname));
+            }
+            format!(
+                r##"struct {} {{
+{}}}
+
+"##,
+                defname, fields_str
+            )
+        }
+        x => {
+            format!("/* {}: {:#?} - not generated */\n", &defname, &def)
+        }
+    }
+    .to_string()
+}
+
 /// This program aims to compile a .json lexicon file into an Rust source code.
 #[derive(Debug, Clone, ClapParser, Serialize, Deserialize)]
 #[clap(version = "0.0.1", author = "Andrew Yourtchenko <ayourtch@gmail.com>")]
@@ -182,11 +204,12 @@ fn main() {
         println!("Reading {}", &fname);
         if let Ok(data) = std::fs::read_to_string(&fname) {
             let lex: LexiconFile = serde_json::from_str(&data).unwrap();
-            println!("read: {:#?}", &lex);
+            // println!("read: {:#?}", &lex);
+            for (name, def) in &lex.defs {
+                println!("{}", codegen_one_def(name, def));
+            }
         } else {
             panic!("Could not read {}", &fname);
         }
     }
-
-    println!("Hello, here is your options: {:#?}", &opts);
 }
