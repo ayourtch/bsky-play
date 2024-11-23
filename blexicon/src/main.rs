@@ -7,6 +7,7 @@ use std::time::{Duration, SystemTime};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct BytesType {
     pub maxLength: Option<u64>,
+    pub minLength: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,6 +102,34 @@ struct ObjectType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct StringType {
     format: Option<String>,
+    maxLength: Option<i64>,
+    minLength: Option<i64>,
+    maxGraphemes: Option<i64>,
+    minGraphemes: Option<i64>,
+    knownValues: Option<Vec<String>>,
+    #[serde(default, rename = "enum")]
+    allowed_enum: Option<Vec<String>>,
+    default: Option<String>,
+    #[serde(rename = "const")]
+    constant: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct BooleanType {
+    default: Option<bool>,
+    #[serde(rename = "const")]
+    constant: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct IntegerType {
+    minimum: Option<i64>,
+    maximum: Option<i64>,
+    #[serde(default, rename = "enum")]
+    allowed_enum: Option<Vec<i64>>,
+    default: Option<i64>,
+    #[serde(rename = "const")]
+    constant: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -125,10 +154,11 @@ enum LexiconDataType {
     Object(ObjectType),
     Ref(RefType),
     Unknown,
-    Boolean,
+    Boolean(BooleanType),
+    Null,
     #[serde(rename = "cid-link")]
     CidLink,
-    Integer,
+    Integer(IntegerType),
     Token,
 }
 
@@ -159,13 +189,13 @@ fn codegen_one_def(defname: &str, def: &LexiconData) -> String {
                 // Determine the Rust type based on the property definition
                 let rust_type = match &propdef.data {
                     LexiconDataType::String(_) => "String".to_string(),
-                    LexiconDataType::Integer => "i64".to_string(),
-                    LexiconDataType::Boolean => "bool".to_string(),
+                    LexiconDataType::Integer(_) => "i64".to_string(),
+                    LexiconDataType::Boolean(_) => "bool".to_string(),
                     LexiconDataType::Array(arr) => {
                         let inner_type = match &arr.items.data {
                             LexiconDataType::String(_) => "String".to_string(),
-                            LexiconDataType::Integer => "i64".to_string(),
-                            LexiconDataType::Boolean => "bool".to_string(),
+                            LexiconDataType::Integer(_) => "i64".to_string(),
+                            LexiconDataType::Boolean(_) => "bool".to_string(),
                             LexiconDataType::Ref(r) => r.reference.split("#").last().unwrap_or(&r.reference).to_string(),
                             _ => "String".to_string() // Default fallback
                         };
