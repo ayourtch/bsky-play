@@ -16,6 +16,12 @@ struct ArrayType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct RecordType {
+    key: String,
+    record: ObjectType,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct TimeType {
     format: String,
 }
@@ -104,6 +110,7 @@ enum LexiconDataType {
     String(StringType),
     Bytes(BytesType),
     Array(ArrayType),
+    Record(RecordType),
     Subscription(SubscriptionType),
     Query(QueryType),
     Procedure(ProcedureType),
@@ -131,6 +138,8 @@ struct LexiconTypeDef {}
 struct LexiconFile {
     pub lexicon: u32,
     pub id: String,
+    pub revision: Option<String>,
+    pub description: Option<String>,
     pub defs: LinkedHashMap<String, LexiconData>,
 }
 
