@@ -82,12 +82,14 @@ struct SubscribeMessage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ParamsType {
+    required: Vec<String>,
     properties: LinkedHashMap<String, LexiconData>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct UnionType {
     refs: Vec<String>,
+    closed: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -139,11 +141,18 @@ struct RefType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct BlobType {
+    accept: Vec<String>,
+    maxSize: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 enum LexiconDataType {
     String(StringType),
     Bytes(BytesType),
+    Blob(BlobType),
     Array(ArrayType),
     Record(RecordType),
     Subscription(SubscriptionType),
